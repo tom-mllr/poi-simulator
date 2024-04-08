@@ -28,29 +28,23 @@ class TextInput:
         self.callbacks_post = callbacks_post if callbacks_post is not None else []
         self.input_type = input_type
         self.max_length = max_length
-        self.text = initial_text
+        self.initial_text = initial_text
+        self.text = self.initial_text
+        self.update_text()
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 self.active = True
             else:
+                if self.active:
+                    self.update_text()
                 self.active = False
                 
         elif event.type == pygame.KEYDOWN:
                 if self.active:
-                    if event.key in [pygame.K_RETURN, 1073741912] and len(self.text) > 0: # 1073741912 is the enter key on german keyboard
-                        arg = None
-                        if self.input_type is not None:
-                            arg = self.input_type(self.text)
-
-                        for cb in self.callbacks_pre:
-                            cb()
-                        if arg is not None:
-                            for cb in self.callbacks_text:
-                                cb(arg)
-                        for cb in self.callbacks_post:
-                            cb()
+                    if event.key in [pygame.K_RETURN, 1073741912]: # 1073741912 is the enter key on german keyboard
+                        self.update_text()
 
                     elif event.key == pygame.K_BACKSPACE:
                         self.text = self.text[:-1]
@@ -74,7 +68,21 @@ class TextInput:
                         else:
                             if self.max_length is None or len(self.text) < self.max_length:
                                 self.text += event.unicode
+    def update_text(self):
+        if self.text=="":
+            self.text = self.initial_text
+        arg = None
+        if self.input_type is not None:
+            arg = self.input_type(self.text)
 
+        for cb in self.callbacks_pre:
+            cb()
+        if arg is not None:
+            for cb in self.callbacks_text:
+                cb(arg)
+        for cb in self.callbacks_post:
+            cb()
+            
     def draw(self, screen):
         pygame.draw.rect(screen, Colors.YELLOW if self.active else Colors.WHITE, self.rect)
         text_surface = self.font.render(self.text, True, Colors.BLACK)
@@ -89,3 +97,5 @@ class TextInput:
 
     def set_text(self, text):
         self.text = text
+        self.update_text()
+        

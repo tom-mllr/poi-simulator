@@ -3,7 +3,6 @@ import pygame
 from poi_simulator.utils import Coordinate
 from poi_simulator.object import Object
 
-
 def move(coord: Coordinate, radius: float, angle: float):
     coord.x = radius * math.cos(angle)
     coord.y = radius * math.sin(angle)
@@ -14,7 +13,6 @@ class Orbit:
     def __init__(self, poi: 'Poi', radius: int):
         self.poi = poi
         self.radius = radius
-        self.angular_speed_base = poi.angular_speed_unit
         self.speed_factor = 1
         self.angle_base = 0
         self.angle_offset_factor = 0
@@ -23,18 +21,16 @@ class Orbit:
         self.trail_enabled = True
         self.trail_positions = []
         self.trail_length = 500
+        
     def set_speed_factor(self, speed_factor):
         self.speed_factor = speed_factor
-        
-    # def set_angle_offset(self, angle_offset_pi: bool):
-    #     self.angle_offset = math.pi if angle_offset_pi else 0
         
     def set_angle_offset(self, angle_offset_factor: float):
         self.angle_offset_factor = angle_offset_factor
 
             
     def get_angular_speed(self):
-        return self.angular_speed_base * self.speed_factor
+        return self.poi.angular_speed_unit * self.speed_factor
     
     def get_angle(self):
         return self.angle_base + self.angle_offset_factor * math.pi
@@ -55,12 +51,12 @@ class Orbit:
         self.trail_positions = []
     
 class Poi(Object):
-    angular_speed_rps = math.pi    # 1/2 rotation per second
-    def __init__(self, color: tuple, pos_center: Coordinate, tick):
+    def __init__(self, sim: 'PoiSimulator', color: tuple, pos_center: Coordinate):
+        self.sim = sim
         self.color = color
         self.pos_center = pos_center
         
-        self.angular_speed_unit = self.angular_speed_rps / tick
+        self.set_unit_speed_pi_per_sec(2)
 
         self.prop = Orbit(self, 180)
         self.arm = Orbit(self, 200)
@@ -73,17 +69,24 @@ class Poi(Object):
         self.reset()
         self.start()
         
+    def set_unit_speed_pi_per_sec(self, pi_per_sec: float):
+        self.angular_speed_unit = pi_per_sec * math.pi / self.sim.tick
+        
     def set_enabled(self, enabled: bool) -> None:
         self.enabled = enabled
+        if self.enabled:
+            self.clear_trail()
+            
         
     def perform_movement(self):
 
-        self.arm.move()
-        self.prop.move()        
-        self.pos_result = self.pos_center + self.arm.pos + self.prop.pos
-        
-        self.trail_positions.append(self.pos_result)
-        self.trail_positions = self.trail_positions[-self.trail_length:]
+        if not self.sim.paused:
+            self.arm.move()
+            self.prop.move()        
+            self.pos_result = self.pos_center + self.arm.pos + self.prop.pos
+            
+            self.trail_positions.append(self.pos_result)
+            self.trail_positions = self.trail_positions[-self.trail_length:]
         
 
     def draw(self, screen):
