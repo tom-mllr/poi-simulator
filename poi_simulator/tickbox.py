@@ -21,22 +21,26 @@ class TickBox:
         self.callbacks_value = callbacks_value if callbacks_value is not None else []
         self.callbacks_post = callbacks_post if callbacks_post is not None else []
         self.checked = initial_state
+        if self.checked:
+            self.execute_callbacks()
 
+    def execute_callbacks(self):
+        if self.callbacks_pre is not None:
+            for cb in self.callbacks_pre:
+                cb()
+        if self.callbacks_value is not None:
+            for cb in self.callbacks_value:
+                cb(self.checked)
+        if self.callbacks_post is not None:
+            for cb in self.callbacks_post:
+                cb()
+                
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.rect.collidepoint(event.pos):
                 self.active = True
                 self.checked = not self.checked
-                if self.callbacks_pre is not None:
-                    for cb in self.callbacks_pre:
-                        cb()
-                if self.callbacks_value is not None:
-                    for cb in self.callbacks_value:
-                        cb(self.checked)
-                if self.callbacks_post is not None:
-                    for cb in self.callbacks_post:
-                        cb()
-            else:
+                self.execute_callbacks()
                 self.active = False
 
     def draw(self, screen):
