@@ -84,7 +84,7 @@ class TextInput:
             cb()
             
     def draw(self, screen):
-        pygame.draw.rect(screen, Colors.YELLOW if self.active else Colors.WHITE, self.rect)
+        pygame.draw.rect(screen, Colors.LIGHT_BLUE if self.active else Colors.WHITE, self.rect)
         text_surface = self.font.render(self.text, True, Colors.BLACK)
         screen.blit(text_surface, (self.rect.x + 5, self.rect.y + 5))
         
